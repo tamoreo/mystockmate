@@ -1,24 +1,73 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { Stack, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
+  const router = useRouter();
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+    <>
+      <StatusBar style="light" />
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: "#0a5658" },
+          headerShadowVisible: false,
+          contentStyle: { marginTop: 0 },
+          headerTitleStyle: {
+            color: "#3cebc5",
+            fontSize: 20,
+            fontWeight: "bold",
+          },
+          headerTitleAlign: "center",
+        }}
+      >
+        <Stack.Screen
+          name="(tabs)"
+          options={{ headerShown: false, headerLeft: () => <></> }}
+        />
+        <Stack.Screen
+          name="login"
+          options={{
+            headerTitle: "",
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.push("/(tabs)")}>
+                <Text style={styles.backButton}>Back</Text>
+              </TouchableOpacity>
+            ),
+          }}
+        />
+        <Stack.Screen
+          name="register"
+          options={{
+            headerTitle: "",
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.push("/(tabs)")}>
+                <Text style={styles.backButton}>Back</Text>
+              </TouchableOpacity>
+            ),
+          }}
+        />
+        <Stack.Screen
+          name="resetpw"
+          options={{
+            headerTitle: "",
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.push("/(tabs)")}>
+                <Text style={styles.backButton}>Back</Text>
+              </TouchableOpacity>
+            ),
+          }}
+        />
+        <Stack.Screen name="+not-found" options={{}} />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    </>
   );
 }
+
+export const styles = StyleSheet.create({
+  backButton: {
+    marginLeft: 15,
+    color: "#3cebc5",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+});

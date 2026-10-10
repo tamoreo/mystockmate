@@ -1,33 +1,102 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarActiveTintColor: "#3cebc5",
+        tabBarInactiveTintColor: "#9caeb1",
+        headerStyle: {
+          backgroundColor: "#0a5658",
+        },
+        headerShadowVisible: false,
+        headerTintColor: "#ffffff",
+        headerTitleAlign: "center",
+        headerTitleStyle: {
+          fontSize: 36,
+          color: "#3cebc5",
+          fontWeight: "bold",
+          textShadowColor: "#042720",
+          textShadowOffset: { width: 2, height: 2 },
+          textShadowRadius: 30,
+        },
+        tabBarStyle: {
+          backgroundColor: "#0f2f30",
+          position: "absolute",
+          bottom: 20,
+          height: 60,
+          borderTopWidth: 0,
+          borderRadius: 30,
+          marginHorizontal: 10,
+          shadowColor: "#445d63",
+          shadowOffset: {
+            width: 8,
+            height: 8,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+        },
+        tabBarLabelStyle: {
+          fontSize: 15,
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarLabel: "Home",
+          headerTitle: "MyStockMate",
+          headerTitleAlign: "center",
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons
+              name={focused ? "home" : "home-outline"}
+              size={22}
+              color={color}
+            />
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="stock"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          tabBarLabel: "Stock",
+          headerTitle: "Manage Inventory",
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons
+              name={focused ? "clipboard" : "clipboard-outline"}
+              size={22}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="addstock"
+        options={{
+          tabBarLabel: "Add Items",
+          headerTitle: "New Item",
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons
+              name={focused ? "add-circle" : "add-circle-outline"}
+              size={22}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          tabBarLabel: "Profile",
+          headerTitle: "My Profile",
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons
+              name={focused ? "person" : "person-outline"}
+              size={22}
+              color={color}
+            />
+          ),
         }}
       />
     </Tabs>
