@@ -15,7 +15,7 @@ export default function TabsLayout() {
         headerTitleAlign: "center",
         headerTitleStyle: {
           fontSize: 36,
-          marginTop: 30,
+          marginTop: 25,
           color: "#3cebc5",
           fontWeight: "bold",
 
