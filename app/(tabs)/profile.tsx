@@ -11,12 +11,9 @@ export default function Profile() {
           style={styles.button}
           onPress={() => alert("Profile updated!")}
         >
-          <Text style={styles.saveBtn}>Edit Account</Text>
+          <Text style={styles.editBtn}>Edit Account</Text>
         </Pressable>
-        <Pressable
-          style={styles.button}
-          onPress={() => alert("Account deleted!")}
-        >
+        <Pressable onPress={() => alert("Account deleted!")}>
           <Text style={styles.deleteBtn}>Delete Account</Text>
         </Pressable>
       </View>
@@ -44,7 +41,7 @@ const styles = StyleSheet.create({
     bottom: 95,
     width: "90%",
   },
-  saveBtn: {
+  editBtn: {
     color: "#fff",
     fontSize: 18,
     textAlign: "center",
@@ -63,6 +60,18 @@ const styles = StyleSheet.create({
     color: "red",
     fontSize: 18,
     textAlign: "center",
+    marginTop: 15,
+    marginLeft: 15,
+    marginRight: 15,
+    padding: 10,
+    width: "90%",
+    shadowColor: "white",
+    shadowOffset: {
+      width: 2,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   headerText: {
     color: "#3cebc5",

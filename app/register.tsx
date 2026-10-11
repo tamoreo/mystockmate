@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   linkbutton: {
     marginTop: 40,
-    color: "#cddbd7",
+    color: "#76e2c3",
     textDecorationLine: "underline",
     textAlign: "center",
     gap: 10,
