@@ -53,6 +53,14 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     marginTop: 20,
   },
+  headerText: {
+    color: "#3cebc5",
+    fontSize: 36,
+    fontWeight: "bold",
+    marginTop: 50,
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 30,
+  },
   linkbutton: {
     marginTop: 15,
     color: "#76e2c3",
@@ -61,6 +69,6 @@ export const styles = StyleSheet.create({
   headerImage: {
     width: 300,
     height: 300,
-    margin: 30,
+    marginTop: 10,
   },
 });

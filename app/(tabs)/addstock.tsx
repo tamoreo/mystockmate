@@ -151,4 +151,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  headerText: {
+    color: "#3cebc5",
+    fontSize: 36,
+    fontWeight: "bold",
+    marginTop: 50,
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 30,
+  },
 });
