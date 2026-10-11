@@ -23,12 +23,21 @@ export default function Index() {
           for small to medium-sized businesses.
         </Text>
       </View>
-      <Link href="/login" style={styles.linkbutton}>
-        Have account? Sign in
-      </Link>
       <Link href="/register" style={styles.linkbutton}>
         Create account
       </Link>
+      <Text style={styles.text}>
+        Have account?{" "}
+        <Link href="/login" style={styles.linkbutton}>
+          Sign in
+        </Link>
+      </Text>
+      <Text style={styles.text}>
+        Forgot password?{" "}
+        <Link href="/resetpw" style={styles.linkbutton}>
+          Reset
+        </Link>
+      </Text>
     </SafeAreaView>
   );
 }
@@ -41,7 +50,8 @@ export const styles = StyleSheet.create({
   },
   text: {
     color: "#3cebc5",
-    fontSize: 18,
+    fontSize: 15,
+    marginTop: 20,
   },
   linkbutton: {
     marginTop: 15,

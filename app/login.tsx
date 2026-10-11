@@ -1,18 +1,27 @@
 import { Link } from "expo-router";
 import {
   Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Login() {
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={{ alignItems: "center" }}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={0}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <Image
           source={require("../assets/icon.png")}
           style={{
@@ -22,11 +31,7 @@ export default function Login() {
             marginBottom: 20,
           }}
         />
-        <Text style={{ color: "#3cebc5", fontSize: 24, marginTop: 10 }}>
-          Login
-        </Text>
-      </View>
-      <View style={styles.formContainer}>
+
         <Text style={styles.textLabel}>Email:</Text>
         <TextInput
           autoCapitalize="none"
@@ -55,28 +60,41 @@ export default function Login() {
         >
           <Text style={styles.loginText}>Login</Text>
         </Pressable>
-        <View style={{ marginTop: 20 }}>
+        <Text style={[styles.loginText, { marginTop: 20 }]}>
+          Forgot password?{" "}
           <Link href="/resetpw" style={styles.linkbutton}>
-            Forgot your password? Reset
+            Reset
           </Link>
+        </Text>
+        <Text style={[styles.loginText, { marginTop: 20 }]}>
+          Do not have account?{" "}
           <Link href="/register" style={styles.linkbutton}>
-            Do not have an account? Sign up
+            Sign up
           </Link>
-        </View>
-      </View>
-    </SafeAreaView>
+        </Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#0a5658",
+  },
+  scrollContent: {
+    flexGrow: 1,
     alignItems: "center",
+    paddingTop: 20,
+    paddingBottom: 125,
     backgroundColor: "#0a5658",
   },
   text: {
     color: "#3cebc5",
-    fontSize: 18,
+    fontSize: 14,
+    paddingTop: 20,
+    textAlign: "center",
+    gap: 5,
   },
   input: {
     marginTop: 5,

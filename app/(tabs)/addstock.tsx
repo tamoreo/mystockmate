@@ -1,54 +1,63 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import {
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
 } from "react-native";
 
 export default function AddStock() {
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 5 }}>
-      <View style={styles.container}>
-        <Text style={styles.textLabel}>Item Name:</Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={0}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.textLabel}>Item Name</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g., Apple iPhone 13"
           placeholderTextColor="#ccc"
         />
-        <Text style={styles.textLabel}>Item Quantity:</Text>
+        <Text style={styles.textLabel}>Item Quantity</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g., 10"
           keyboardType="numeric"
           placeholderTextColor="#ccc"
         />
-        <Text style={styles.textLabel}>Item Size:</Text>
+        <Text style={styles.textLabel}>Item Size</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g., Large or 5kg"
           placeholderTextColor="#ccc"
         />
-        <Text style={styles.textLabel}>Item Description:</Text>
+        <Text style={styles.textLabel}>Item Description</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g., A sleek smartphone with advanced features"
           placeholderTextColor="#ccc"
         />
-        <Text style={styles.textLabel}>Item Price:</Text>
+        <Text style={styles.textLabel}>Item Price</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g., 99.99"
           inputMode="decimal"
           placeholderTextColor="#ccc"
         />
-        <Text style={styles.textLabel}>Item Image:</Text>
+        <Text style={styles.textLabel}>Item Image</Text>
         <TouchableOpacity
           style={styles.image}
-          onPress={() => alert("Image picker not implemented!")}
+          onPress={() => alert("Image picker not implemented yet!")}
         >
           <MaterialCommunityIcons
             name="camera-plus"
@@ -65,34 +74,36 @@ export default function AddStock() {
           <Text style={styles.addText}>Save Items</Text>
         </Pressable>
         <Pressable
-          style={[
-            styles.button,
-            {
-              backgroundColor: "#052921",
-              marginTop: 25,
-              marginBottom: 30,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.3,
-              shadowRadius: 4,
-              elevation: 5,
-            },
-          ]}
+          style={{
+            backgroundColor: "transparent",
+            marginTop: 25,
+            marginBottom: 30,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            elevation: 5,
+          }}
           onPress={() => alert("Fields cleared!")}
         >
           <Text style={styles.addText}>Clear Fields</Text>
         </Pressable>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
     backgroundColor: "#0a5658",
-    height: "100%",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: "center",
+    paddingTop: 20,
+    paddingBottom: 125,
+    backgroundColor: "#0a5658",
   },
   input: {
     marginTop: 2,

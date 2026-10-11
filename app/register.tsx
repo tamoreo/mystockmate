@@ -1,97 +1,105 @@
 import { Link } from "expo-router";
 import {
-  Image,
   KeyboardAvoidingView,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Register() {
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior="padding"
-        style={{ flex: 1, width: "100%" }}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={0}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <View style={{ alignItems: "center" }}>
-          <View style={styles.headerContainer}>
-            <Text style={{ color: "#3cebc5", fontSize: 24, marginTop: 10 }}>
-              MyStockMate Account
-            </Text>
-            <Image
-              source={require("../assets/icon.png")}
-              style={styles.stockmateIcon}
-            />
-          </View>
-        </View>
-        <View style={styles.formContainer}>
-          <Text style={styles.textLabel}>First Name:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your first name"
-            placeholderTextColor="#ccc"
-          />
-          <Text style={styles.textLabel}>Surname:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your surname"
-            placeholderTextColor="#ccc"
-          />
-          <Text style={styles.textLabel}>Email:</Text>
-          <TextInput
-            autoCapitalize="none"
-            keyboardType="email-address"
-            style={styles.input}
-            placeholder="email@example.com"
-            placeholderTextColor="#ccc"
-            inputMode="email"
-          />
-          <Text style={styles.textLabel}>Contact No:</Text>
-          <TextInput
-            autoCapitalize="none"
-            keyboardType="phone-pad"
-            style={styles.input}
-            placeholder="e.g 0123456789"
-            placeholderTextColor="#ccc"
-            inputMode="numeric"
-          />
-          <Text style={styles.textLabel}>Password:</Text>
-          <TextInput
-            autoCapitalize="none"
-            style={styles.input}
-            placeholder="Enter password"
-            placeholderTextColor="#ccc"
-            secureTextEntry
-          />
-          <Pressable
-            style={[
-              styles.button,
-              {
-                shadowRadius: 4,
-                elevation: 5,
-              },
-            ]}
-            onPress={() => alert("Profile registered!")}
-          >
-            <Text style={styles.registerText}>Register</Text>
-          </Pressable>
-        </View>
-        <Link href="/login" style={styles.linkbutton}>
-          Already have an account? Sign in
-        </Link>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        <Text style={styles.textLabel}>First Name:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your first name"
+          placeholderTextColor="#ccc"
+        />
+        <Text style={styles.textLabel}>Surname:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your surname"
+          placeholderTextColor="#ccc"
+        />
+        <Text style={styles.textLabel}>Email:</Text>
+        <TextInput
+          autoCapitalize="none"
+          keyboardType="email-address"
+          style={styles.input}
+          placeholder="email@example.com"
+          placeholderTextColor="#ccc"
+          inputMode="email"
+        />
+        <Text style={styles.textLabel}>Contact No:</Text>
+        <TextInput
+          autoCapitalize="none"
+          keyboardType="phone-pad"
+          style={styles.input}
+          placeholder="e.g 0123456789"
+          placeholderTextColor="#ccc"
+          inputMode="numeric"
+        />
+        <Text style={styles.textLabel}>Password:</Text>
+        <TextInput
+          autoCapitalize="none"
+          style={styles.input}
+          placeholder="Enter password"
+          placeholderTextColor="#ccc"
+          secureTextEntry
+        />
+        <Text style={styles.textLabel}>Confirm Password:</Text>
+        <TextInput
+          autoCapitalize="none"
+          style={styles.input}
+          placeholder="Enter password"
+          placeholderTextColor="#ccc"
+          secureTextEntry
+        />
+        <Pressable
+          style={[
+            styles.button,
+            {
+              shadowRadius: 4,
+              elevation: 5,
+            },
+          ]}
+          onPress={() => alert("Profile registered!")}
+        >
+          <Text style={styles.registerText}>Register</Text>
+        </Pressable>
+        <Text style={{ color: "#3cebc5", fontSize: 16, marginTop: 20 }}>
+          Already have an account?{" "}
+          <Link href="/login" style={styles.linkbutton}>
+            Sign in
+          </Link>
+        </Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#0a5658",
+  },
+  scrollContent: {
+    flexGrow: 1,
     alignItems: "center",
+    paddingTop: 20,
+    paddingBottom: 125,
     backgroundColor: "#0a5658",
   },
   input: {
@@ -116,28 +124,27 @@ const styles = StyleSheet.create({
     marginTop: 30,
     marginLeft: 10,
     marginRight: 10,
-    width: "90%",
+    width: "50%",
     backgroundColor: "#0d473b",
     padding: 10,
     borderRadius: 8,
     shadowRadius: 4,
     elevation: 5,
+    alignSelf: "center",
   },
   linkbutton: {
-    marginTop: 20,
+    marginTop: 40,
     color: "#cddbd7",
     textDecorationLine: "underline",
     textAlign: "center",
+    gap: 10,
   },
   registerText: {
     color: "#3cebc5",
     fontSize: 16,
     textAlign: "center",
   },
-  formContainer: {
-    width: "100%",
-    alignItems: "center",
-  },
+
   textLabel: {
     color: "#3cebc5",
     fontSize: 16,
@@ -150,12 +157,5 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     marginBottom: 20,
     marginTop: -40,
-  },
-  stockmateIcon: {
-    width: 100,
-    height: 100,
-    marginTop: 10,
-    marginBottom: 6,
-    alignSelf: "center",
   },
 });

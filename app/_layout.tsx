@@ -1,6 +1,6 @@
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity } from "react-native";
 
 export default function RootLayout() {
   const router = useRouter();
@@ -27,7 +27,7 @@ export default function RootLayout() {
         <Stack.Screen
           name="login"
           options={{
-            headerTitle: "",
+            headerTitle: "Login",
             headerLeft: () => (
               <TouchableOpacity onPress={() => router.push("/(tabs)")}>
                 <Text style={styles.backButton}>Back</Text>
@@ -38,11 +38,17 @@ export default function RootLayout() {
         <Stack.Screen
           name="register"
           options={{
-            headerTitle: "",
+            headerTitle: "Create an Account",
             headerLeft: () => (
               <TouchableOpacity onPress={() => router.push("/(tabs)")}>
                 <Text style={styles.backButton}>Back</Text>
               </TouchableOpacity>
+            ),
+            headerRight: () => (
+              <Image
+                source={require("../assets/icon.png")}
+                style={styles.stockmateIcon}
+              />
             ),
           }}
         />
@@ -69,5 +75,12 @@ export const styles = StyleSheet.create({
     color: "#3cebc5",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  stockmateIcon: {
+    width: 60,
+    height: 60,
+    marginTop: 10,
+    marginBottom: 6,
+    alignSelf: "center",
   },
 });

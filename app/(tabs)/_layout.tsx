@@ -17,7 +17,7 @@ export default function TabsLayout() {
           fontSize: 36,
           color: "#3cebc5",
           fontWeight: "bold",
-          textShadowColor: "#042720",
+
           textShadowOffset: { width: 2, height: 2 },
           textShadowRadius: 30,
         },
