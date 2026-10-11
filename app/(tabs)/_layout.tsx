@@ -15,6 +15,7 @@ export default function TabsLayout() {
         headerTitleAlign: "center",
         headerTitleStyle: {
           fontSize: 36,
+          marginTop: 30,
           color: "#3cebc5",
           fontWeight: "bold",
 
@@ -61,7 +62,7 @@ export default function TabsLayout() {
         name="stock"
         options={{
           tabBarLabel: "Stock",
-          headerTitle: "Manage Inventory",
+          headerTitle: "Inventory",
           tabBarIcon: ({ focused, color }) => (
             <Ionicons
               name={focused ? "clipboard" : "clipboard-outline"}

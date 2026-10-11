@@ -15,7 +15,7 @@ export default function Index() {
             color: "#3cebc5",
             fontSize: 16,
             lineHeight: 20,
-            margin: 14,
+            marginTop: 20,
             textAlign: "center",
           }}
         >
