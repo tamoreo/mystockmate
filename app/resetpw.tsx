@@ -6,19 +6,19 @@ export default function Resetpw() {
       <Text style={{ color: "#3cebc5", fontSize: 24, marginTop: 10 }}>
         Password Reset
       </Text>
-      <Text style={styles.textLabel}>Email:</Text>
+      <Text style={styles.textLabel}>Email</Text>
       <TextInput
         style={styles.input}
         placeholder="Enter your email"
         placeholderTextColor="#ccc"
       />
-      <Text style={styles.textLabel}>New Password:</Text>
+      <Text style={styles.textLabel}>New Password</Text>
       <TextInput
         style={styles.input}
         placeholder="Enter New Password"
         placeholderTextColor="#ccc"
       />
-      <Text style={styles.textLabel}>Confirm New Password:</Text>
+      <Text style={styles.textLabel}>Confirm New Password</Text>
       <TextInput
         style={styles.input}
         placeholder="Confirm New Password"

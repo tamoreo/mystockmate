@@ -32,7 +32,7 @@ export default function Login() {
           }}
         />
 
-        <Text style={styles.textLabel}>Email:</Text>
+        <Text style={styles.textLabel}>Email</Text>
         <TextInput
           autoCapitalize="none"
           keyboardType="email-address"
@@ -40,7 +40,7 @@ export default function Login() {
           placeholder="e.g., user@example.com"
           placeholderTextColor="#ccc"
         />
-        <Text style={styles.textLabel}>Password:</Text>
+        <Text style={styles.textLabel}>Password</Text>
         <TextInput
           autoCapitalize="none"
           style={styles.input}

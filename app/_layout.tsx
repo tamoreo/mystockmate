@@ -1,11 +1,13 @@
+import { AuthProvider } from "@/lib/auth";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+
 import { Image, StyleSheet, Text, TouchableOpacity } from "react-native";
 
 export default function RootLayout() {
   const router = useRouter();
   return (
-    <>
+    <AuthProvider>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -29,7 +31,7 @@ export default function RootLayout() {
           options={{
             headerTitle: "MyStockMate",
             headerTitleAlign: "center",
-            headerLeft: () => "",
+            headerLeft: () => null,
           }}
         />
         <Stack.Screen
@@ -73,7 +75,7 @@ export default function RootLayout() {
         />
         <Stack.Screen name="+not-found" options={{}} />
       </Stack>
-    </>
+    </AuthProvider>
   );
 }
 
