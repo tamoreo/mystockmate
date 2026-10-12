@@ -7,7 +7,7 @@ export default function Index() {
     <SafeAreaView style={styles.container}>
       <View style={{ alignItems: "center" }}>
         <Image
-          source={require("../../assets/icon.png")}
+          source={require("../assets/icon.png")}
           style={styles.headerImage}
         />
         <Text

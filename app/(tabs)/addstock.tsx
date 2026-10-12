@@ -28,6 +28,12 @@ export default function AddStock() {
           placeholder="e.g., Apple iPhone 13"
           placeholderTextColor="#ccc"
         />
+        <Text style={styles.textLabel}>Item Type</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. Elcetronics, Clothing, Food"
+          placeholderTextColor="#ccc"
+        />
         <Text style={styles.textLabel}>Item Quantity</Text>
         <TextInput
           style={styles.input}

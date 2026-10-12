@@ -14,7 +14,7 @@ export default function RootLayout() {
           contentStyle: { marginTop: 0 },
           headerTitleStyle: {
             color: "#3cebc5",
-            fontSize: 20,
+            fontSize: 26,
             fontWeight: "bold",
           },
           headerTitleAlign: "center",
@@ -25,11 +25,19 @@ export default function RootLayout() {
           options={{ headerShown: false, headerLeft: () => <></> }}
         />
         <Stack.Screen
+          name="index"
+          options={{
+            headerTitle: "MyStockMate",
+            headerTitleAlign: "center",
+            headerLeft: () => "",
+          }}
+        />
+        <Stack.Screen
           name="login"
           options={{
             headerTitle: "Login",
             headerLeft: () => (
-              <TouchableOpacity onPress={() => router.push("/(tabs)")}>
+              <TouchableOpacity onPress={() => router.push("/")}>
                 <Text style={styles.backButton}>Back</Text>
               </TouchableOpacity>
             ),
@@ -38,9 +46,9 @@ export default function RootLayout() {
         <Stack.Screen
           name="register"
           options={{
-            headerTitle: "Create an Account",
+            headerTitle: "Create Account",
             headerLeft: () => (
-              <TouchableOpacity onPress={() => router.push("/(tabs)")}>
+              <TouchableOpacity onPress={() => router.push("/")}>
                 <Text style={styles.backButton}>Back</Text>
               </TouchableOpacity>
             ),
@@ -57,7 +65,7 @@ export default function RootLayout() {
           options={{
             headerTitle: "",
             headerLeft: () => (
-              <TouchableOpacity onPress={() => router.push("/(tabs)")}>
+              <TouchableOpacity onPress={() => router.push("/")}>
                 <Text style={styles.backButton}>Back</Text>
               </TouchableOpacity>
             ),

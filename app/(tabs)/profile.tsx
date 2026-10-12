@@ -57,6 +57,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   deleteBtn: {
+    borderWidth: 1,
+    borderColor: "red",
+    borderRadius: 8,
     color: "red",
     fontSize: 18,
     textAlign: "center",
@@ -64,7 +67,7 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     marginRight: 15,
     padding: 10,
-    width: "90%",
+    width: "84%",
     shadowColor: "white",
     shadowOffset: {
       width: 2,

@@ -18,7 +18,6 @@ export default function TabsLayout() {
           marginTop: 25,
           color: "#3cebc5",
           fontWeight: "bold",
-
           textShadowOffset: { width: 2, height: 2 },
           textShadowRadius: 30,
         },

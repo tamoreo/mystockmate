@@ -1,4 +1,5 @@
 import { Link } from "expo-router";
+
 import {
   KeyboardAvoidingView,
   Platform,
@@ -21,19 +22,32 @@ export default function Register() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.textLabel}>First Name:</Text>
+        <Text style={styles.textLabel}>First Name</Text>
         <TextInput
           style={styles.input}
           placeholder="Enter your first name"
           placeholderTextColor="#ccc"
         />
-        <Text style={styles.textLabel}>Surname:</Text>
+        <Text style={styles.textLabel}>Surname</Text>
         <TextInput
           style={styles.input}
           placeholder="Enter your surname"
           placeholderTextColor="#ccc"
         />
-        <Text style={styles.textLabel}>Email:</Text>
+        <Text style={styles.textLabel}>Business Name</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your business name"
+          placeholderTextColor="#ccc"
+        />
+        <Text style={styles.textLabel}>Business Type</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your business type"
+          placeholderTextColor="#ccc"
+        />
+
+        <Text style={styles.textLabel}>Email</Text>
         <TextInput
           autoCapitalize="none"
           keyboardType="email-address"
@@ -42,7 +56,7 @@ export default function Register() {
           placeholderTextColor="#ccc"
           inputMode="email"
         />
-        <Text style={styles.textLabel}>Contact No:</Text>
+        <Text style={styles.textLabel}>Contact No</Text>
         <TextInput
           autoCapitalize="none"
           keyboardType="phone-pad"
@@ -51,7 +65,7 @@ export default function Register() {
           placeholderTextColor="#ccc"
           inputMode="numeric"
         />
-        <Text style={styles.textLabel}>Password:</Text>
+        <Text style={styles.textLabel}>Password</Text>
         <TextInput
           autoCapitalize="none"
           style={styles.input}
@@ -59,7 +73,7 @@ export default function Register() {
           placeholderTextColor="#ccc"
           secureTextEntry
         />
-        <Text style={styles.textLabel}>Confirm Password:</Text>
+        <Text style={styles.textLabel}>Confirm Password</Text>
         <TextInput
           autoCapitalize="none"
           style={styles.input}
