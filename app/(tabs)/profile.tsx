@@ -1,6 +1,37 @@
+import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { supabase } from "../../lib/supabase";
+
+async function loadProfile() {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    console.log("No signed-in user");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  if (error) {
+    console.log("Profile error:", error.message);
+    return;
+  }
+
+  console.log("My profile:", data);
+}
 
 export default function Profile() {
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ flexGrow: 3 }}>

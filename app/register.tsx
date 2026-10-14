@@ -1,6 +1,7 @@
-import { Link } from "expo-router";
-
+import { Link, useRouter } from "expo-router";
+import { useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -9,8 +10,98 @@ import {
   Text,
   TextInput,
 } from "react-native";
+import { supabase } from "../lib/supabase";
 
 export default function Register() {
+  const router = useRouter();
+
+  const [firstName, setFirstName] = useState("");
+  const [surname, setSurname] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [businessType, setBusinessType] = useState("");
+  const [email, setEmail] = useState("");
+  const [contactNo, setContactNo] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleRegister() {
+    const cleanFirstName = firstName.trim();
+    const cleanSurname = surname.trim();
+    const cleanBusinessName = businessName.trim();
+    const cleanBusinessType = businessType.trim();
+    const cleanContactNo = contactNo.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+    const cleanConfirmPassword = confirmPassword.trim();
+
+    if (
+      !cleanFirstName ||
+      !cleanSurname ||
+      !cleanBusinessName ||
+      !cleanBusinessType ||
+      !cleanEmail ||
+      !cleanContactNo ||
+      !cleanPassword ||
+      !cleanConfirmPassword
+    ) {
+      Alert.alert("Missing details", "Please complete all fields.");
+      return;
+    }
+
+    if (cleanPassword.length < 8) {
+      Alert.alert("Password too short", "Please use at least 8 characters.");
+      return;
+    }
+
+    if (cleanPassword !== cleanConfirmPassword) {
+      Alert.alert("Passwords do not match", "Please check your password.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password: cleanPassword,
+        options: {
+          data: {
+            first_name: cleanFirstName,
+            surname: cleanSurname,
+            business_name: cleanBusinessName,
+            business_type: cleanBusinessType,
+            contact_no: cleanContactNo,
+          },
+        },
+      });
+
+      if (error) {
+        Alert.alert("Registration failed", error.message);
+        return;
+      }
+
+      // With email confirmation disabled, Supabase normally
+      // returns a session immediately after successful signup.
+      if (data.session) {
+        router.replace("/(tabs)/stock" as any);
+      } else {
+        Alert.alert(
+          "Check your email",
+          "Your account was created. Confirm your email, then log in to access your stock.",
+        );
+        router.replace("/login");
+      }
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Something went wrong.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -24,24 +115,32 @@ export default function Register() {
       >
         <Text style={styles.textLabel}>First Name</Text>
         <TextInput
+          value={firstName}
+          onChangeText={setFirstName}
           style={styles.input}
           placeholder="Enter your first name"
           placeholderTextColor="#ccc"
         />
         <Text style={styles.textLabel}>Surname</Text>
         <TextInput
+          value={surname}
+          onChangeText={setSurname}
           style={styles.input}
           placeholder="Enter your surname"
           placeholderTextColor="#ccc"
         />
         <Text style={styles.textLabel}>Business Name</Text>
         <TextInput
+          value={businessName}
+          onChangeText={setBusinessName}
           style={styles.input}
           placeholder="Enter your business name"
           placeholderTextColor="#ccc"
         />
         <Text style={styles.textLabel}>Business Type</Text>
         <TextInput
+          value={businessType}
+          onChangeText={setBusinessType}
           style={styles.input}
           placeholder="Enter your business type"
           placeholderTextColor="#ccc"
@@ -49,6 +148,8 @@ export default function Register() {
 
         <Text style={styles.textLabel}>Email</Text>
         <TextInput
+          value={email}
+          onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
           style={styles.input}
@@ -58,6 +159,8 @@ export default function Register() {
         />
         <Text style={styles.textLabel}>Contact No</Text>
         <TextInput
+          value={contactNo}
+          onChangeText={setContactNo}
           autoCapitalize="none"
           keyboardType="phone-pad"
           style={styles.input}
@@ -67,6 +170,8 @@ export default function Register() {
         />
         <Text style={styles.textLabel}>Password</Text>
         <TextInput
+          value={password}
+          onChangeText={setPassword}
           autoCapitalize="none"
           style={styles.input}
           placeholder="Enter password"
@@ -75,6 +180,8 @@ export default function Register() {
         />
         <Text style={styles.textLabel}>Confirm Password</Text>
         <TextInput
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
           autoCapitalize="none"
           style={styles.input}
           placeholder="Enter password"
@@ -89,9 +196,10 @@ export default function Register() {
               elevation: 5,
             },
           ]}
-          onPress={() => alert("Profile registered!")}
+          onPress={handleRegister}
+          disabled={loading}
         >
-          <Text style={styles.registerText}>Register</Text>
+          <Text>{loading ? "Creating account..." : "Register"}</Text>
         </Pressable>
         <Text style={{ color: "#3cebc5", fontSize: 16, marginTop: 20 }}>
           Already have an account?{" "}

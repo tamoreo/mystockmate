@@ -1,5 +1,7 @@
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
+import { useState } from "react";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -9,8 +11,50 @@ import {
   Text,
   TextInput,
 } from "react-native";
+import { supabase } from "../lib/supabase";
 
 export default function Login() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleLogin() {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
+    if (!cleanEmail || !cleanPassword) {
+      Alert.alert("Missing details", "Please complete all fields.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password: cleanPassword,
+      });
+
+      if (error) {
+        Alert.alert("Login failed", error.message);
+        return;
+      }
+
+      if (data.session) {
+        router.replace("/(tabs)/stock" as any);
+      }
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Something went wrong.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -34,6 +78,8 @@ export default function Login() {
 
         <Text style={styles.textLabel}>Email</Text>
         <TextInput
+          value={email}
+          onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
           style={styles.input}
@@ -42,6 +88,8 @@ export default function Login() {
         />
         <Text style={styles.textLabel}>Password</Text>
         <TextInput
+          value={password}
+          onChangeText={setPassword}
           autoCapitalize="none"
           style={styles.input}
           placeholder="Enter your password"
@@ -56,7 +104,8 @@ export default function Login() {
               elevation: 5,
             },
           ]}
-          onPress={() => alert("Profile logged in!")}
+          onPress={handleLogin}
+          disabled={loading}
         >
           <Text style={styles.loginText}>Login</Text>
         </Pressable>
