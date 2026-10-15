@@ -31,7 +31,7 @@ export default function RootLayout() {
           options={{
             headerTitle: "MyStockMate",
             headerTitleAlign: "center",
-            headerLeft: () => null,
+            headerLeft: () => "",
           }}
         />
         <Stack.Screen

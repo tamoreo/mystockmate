@@ -199,7 +199,9 @@ export default function Register() {
           onPress={handleRegister}
           disabled={loading}
         >
-          <Text>{loading ? "Creating account..." : "Register"}</Text>
+          <Text style={styles.registerText}>
+            {loading ? "Creating account..." : "Register"}
+          </Text>
         </Pressable>
         <Text style={{ color: "#3cebc5", fontSize: 16, marginTop: 20 }}>
           Already have an account?{" "}

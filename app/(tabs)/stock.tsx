@@ -193,9 +193,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   message: {
-    marginTop: 12,
     color: "#777777",
-    textAlign: "center",
     fontSize: 15,
   },
   errorText: {

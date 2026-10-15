@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Tabs, router } from "expo-router";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
 
 export default function TabsLayout() {
   return (
@@ -43,25 +44,15 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
-        options={{
-          tabBarLabel: "Home",
-          headerTitle: "MyStockMate",
-          headerTitleAlign: "center",
-          tabBarIcon: ({ focused, color }) => (
-            <Ionicons
-              name={focused ? "home" : "home-outline"}
-              size={22}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="stock"
         options={{
           tabBarLabel: "Stock",
           headerTitle: "Inventory",
+          headerRight: () => (
+            <TouchableOpacity onPress={() => router.push("/")}>
+              <Text style={styles.exitButton}>Exit</Text>
+            </TouchableOpacity>
+          ),
           tabBarIcon: ({ focused, color }) => (
             <Ionicons
               name={focused ? "clipboard" : "clipboard-outline"}
@@ -76,6 +67,11 @@ export default function TabsLayout() {
         options={{
           tabBarLabel: "Add Items",
           headerTitle: "New Item",
+          headerRight: () => (
+            <TouchableOpacity onPress={() => router.push("/")}>
+              <Text style={styles.exitButton}>Exit</Text>
+            </TouchableOpacity>
+          ),
           tabBarIcon: ({ focused, color }) => (
             <Ionicons
               name={focused ? "add-circle" : "add-circle-outline"}
@@ -90,6 +86,11 @@ export default function TabsLayout() {
         options={{
           tabBarLabel: "Profile",
           headerTitle: "My Profile",
+          headerRight: () => (
+            <TouchableOpacity onPress={() => router.push("/")}>
+              <Text style={styles.exitButton}>Exit</Text>
+            </TouchableOpacity>
+          ),
           tabBarIcon: ({ focused, color }) => (
             <Ionicons
               name={focused ? "person" : "person-outline"}
@@ -102,3 +103,13 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+
+export const styles = StyleSheet.create({
+  exitButton: {
+    marginRight: 20,
+    marginTop: 30,
+    color: "#3cebc5",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+});

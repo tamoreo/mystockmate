@@ -25,7 +25,7 @@ export default function Login() {
     const cleanPassword = password.trim();
 
     if (!cleanEmail || !cleanPassword) {
-      Alert.alert("Missing details", "Please complete all fields.");
+      Alert.alert("Incorrect Email/Password", "Please fill correct details.");
       return;
     }
 
@@ -83,7 +83,7 @@ export default function Login() {
           autoCapitalize="none"
           keyboardType="email-address"
           style={styles.input}
-          placeholder="e.g., user@example.com"
+          placeholder="user@example.com"
           placeholderTextColor="#ccc"
         />
         <Text style={styles.textLabel}>Password</Text>
