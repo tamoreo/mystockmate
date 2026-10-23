@@ -66,6 +66,7 @@ export default function Register() {
         email: cleanEmail,
         password: cleanPassword,
         options: {
+          emailRedirectTo: "mystockmate://auth/callback",
           data: {
             first_name: cleanFirstName,
             surname: cleanSurname,
@@ -81,8 +82,6 @@ export default function Register() {
         return;
       }
 
-      // With email confirmation disabled, Supabase normally
-      // returns a session immediately after successful signup.
       if (data.session) {
         router.replace("/(tabs)/stock" as any);
       } else {
@@ -237,7 +236,7 @@ const styles = StyleSheet.create({
     color: "#b7b7b5",
     shadowRadius: 4,
     elevation: 5,
-    backgroundColor: "#1a4b45",
+    backgroundColor: "#173c3d",
   },
   label: {
     color: "#3cebc5",

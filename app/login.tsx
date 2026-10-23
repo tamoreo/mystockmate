@@ -25,7 +25,7 @@ export default function Login() {
     const cleanPassword = password.trim();
 
     if (!cleanEmail || !cleanPassword) {
-      Alert.alert("Incorrect Email/Password", "Please fill correct details.");
+      Alert.alert("Invalid Email/Password", "Please fill correct details.");
       return;
     }
 
@@ -38,7 +38,7 @@ export default function Login() {
       });
 
       if (error) {
-        Alert.alert("Login failed", error.message);
+        Alert.alert("Login failed", "User not registered/found");
         return;
       }
 
@@ -107,7 +107,9 @@ export default function Login() {
           onPress={handleLogin}
           disabled={loading}
         >
-          <Text style={styles.loginText}>Login</Text>
+          <Text style={styles.loginText}>
+            {loading ? "Loging in..." : "Login"}
+          </Text>
         </Pressable>
         <Text style={[styles.loginText, { marginTop: 20 }]}>
           Forgot password?{" "}
@@ -156,7 +158,7 @@ const styles = StyleSheet.create({
     color: "#b7b7b5",
     shadowRadius: 4,
     elevation: 5,
-    backgroundColor: "#1a4b45",
+    backgroundColor: "#173c3d",
   },
   button: {
     marginTop: 35,

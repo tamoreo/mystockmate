@@ -73,7 +73,7 @@ export default function RootLayout() {
             ),
           }}
         />
-        <Stack.Screen name="+not-found" options={{}} />
+        <Stack.Screen name="+not-found" options={{ headerLeft: () => "" }} />
       </Stack>
     </AuthProvider>
   );

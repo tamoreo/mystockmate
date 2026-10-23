@@ -1,12 +1,16 @@
-import { Redirect } from "expo-router";
-import { useEffect, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { Redirect, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useAuth } from "../../lib/auth";
@@ -20,38 +24,68 @@ type ProfileData = {
   contact_no: string | null;
 };
 
+const emptyProfile: ProfileData = {
+  first_name: "",
+  surname: "",
+  business_name: "",
+  business_type: "",
+  contact_no: "",
+};
+
 export default function Profile() {
   const { session, loading: authLoading } = useAuth();
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-
   const userId = session?.user.id;
 
-  useEffect(() => {
-    if (!userId) return;
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [form, setForm] = useState<ProfileData>(emptyProfile);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-    let cancelled = false;
+  const loadProfile = useCallback(async () => {
+    if (!userId) {
+      setLoadingProfile(false);
+      return;
+    }
 
-    const loadProfile = async () => {
+    setLoadingProfile(true);
+    setErrorMessage("");
+
+    try {
       const { data, error } = await supabase
         .from("profiles")
         .select("first_name, surname, business_name, business_type, contact_no")
         .eq("id", userId)
         .maybeSingle();
 
-      if (cancelled) return;
-
-      setErrorMessage(error?.message ?? "");
-      setProfile(error ? null : data);
+      if (error) {
+        setErrorMessage(error.message);
+        setProfile(null);
+      } else if (data) {
+        const savedProfile = data as ProfileData;
+        setProfile(savedProfile);
+        setForm(savedProfile);
+      } else {
+        setProfile(null);
+        setForm(emptyProfile);
+        setErrorMessage(
+          "No profile record was found. Please check your profiles table.",
+        );
+      }
+    } catch {
+      setErrorMessage("Unable to load your profile. Please try again.");
+    } finally {
       setLoadingProfile(false);
-    };
-
-    void loadProfile();
-    return () => {
-      cancelled = true;
-    };
+    }
   }, [userId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadProfile();
+    }, [loadProfile]),
+  );
 
   if (authLoading) {
     return (
@@ -65,148 +99,304 @@ export default function Profile() {
     return <Redirect href="/login" />;
   }
 
-  if (loadingProfile) {
+  function updateField(key: keyof ProfileData, value: string) {
+    setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function startEditing() {
+    setForm(profile ?? emptyProfile);
+    setEditing(true);
+  }
+
+  function cancelEditing() {
+    setForm(profile ?? emptyProfile);
+    setEditing(false);
+  }
+
+  async function saveProfile() {
+    if (!userId) return;
+
+    if (
+      !form.first_name?.trim() ||
+      !form.surname?.trim() ||
+      !form.business_name?.trim()
+    ) {
+      Alert.alert(
+        "Missing details",
+        "Please enter your first name, surname and business name.",
+      );
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const updatedProfile = {
+        first_name: form.first_name.trim(),
+        surname: form.surname.trim(),
+        business_name: form.business_name.trim(),
+        business_type: form.business_type?.trim() || "",
+        contact_no: form.contact_no?.trim() || "",
+      };
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .update(updatedProfile)
+        .eq("id", userId)
+        .select("first_name, surname, business_name, business_type, contact_no")
+        .maybeSingle();
+
+      if (error) {
+        Alert.alert("Update failed", error.message);
+        return;
+      }
+
+      if (!data) {
+        Alert.alert(
+          "Profile not updated",
+          "No profile record was updated. Please check that your profile exists and that your Supabase update policy permits this operation.",
+        );
+        return;
+      }
+
+      const saved = data as ProfileData;
+      setProfile(saved);
+      setForm(saved);
+      setEditing(false);
+
+      Alert.alert("Success", "Your profile has been updated.");
+    } catch {
+      Alert.alert("Error", "Unable to update your profile.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function confirmClearProfile() {
+    Alert.alert(
+      "Clear Profile Details",
+      "This will clear your personal and business details. Your login account, email address and stock items will remain.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear Details",
+          style: "destructive",
+          onPress: () => void clearProfile(),
+        },
+      ],
+    );
+  }
+
+  async function clearProfile() {
+    if (!userId) return;
+
+    setClearing(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({
+          first_name: "",
+          surname: "",
+          business_name: "",
+          business_type: "",
+          contact_no: "",
+        })
+        .eq("id", userId)
+        .select("first_name, surname, business_name, business_type, contact_no")
+        .maybeSingle();
+
+      if (error) {
+        Alert.alert("Clear failed", error.message);
+        return;
+      }
+
+      if (!data) {
+        Alert.alert(
+          "Profile not cleared",
+          "No profile record was updated. Please verify that your profile exists.",
+        );
+        return;
+      }
+
+      const clearedProfile = data as ProfileData;
+      setProfile(clearedProfile);
+      setForm(clearedProfile);
+      setEditing(false);
+
+      Alert.alert(
+        "Profile Cleared",
+        "Your profile details have been cleared. Your login and stock items are unchanged.",
+      );
+    } catch {
+      Alert.alert("Error", "Unable to clear your profile details.");
+    } finally {
+      setClearing(false);
+    }
+  }
+
+  function renderField(
+    label: string,
+    field: keyof ProfileData,
+    placeholder: string,
+  ) {
+    const value = form[field] ?? "";
+
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3cebc5" />
-        <Text style={styles.text}>Loading profile...</Text>
+      <View style={styles.profileRow}>
+        <Text style={styles.label}>{label}</Text>
+
+        {editing ? (
+          <TextInput
+            style={styles.input}
+            value={value}
+            onChangeText={(text) => updateField(field, text)}
+            placeholder={placeholder}
+            placeholderTextColor="#9caeb1"
+            editable={!saving && !clearing}
+          />
+        ) : (
+          <Text style={styles.value}>{value || "Not provided"}</Text>
+        )}
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.headerText}>My Profile</Text>
-
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={0}
+    >
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.profileContent}
+        keyboardShouldPersistTaps="handled"
       >
-        {errorMessage ? (
-          <Text style={styles.errorText}>{errorMessage}</Text>
-        ) : !profile ? (
-          <Text style={styles.text}>
-            No profile information found. Check your Supabase profile table.
+        <View style={styles.header}>
+          <View style={styles.avatar}>
+            <Ionicons name="person-outline" size={42} color="#3cebc5" />
+          </View>
+          <Text style={styles.subtitle}>
+            Manage your personal and business details
           </Text>
+        </View>
+
+        <View style={styles.profileRow}>
+          <Text style={styles.label}>Email Address</Text>
+          <Text style={styles.value}>
+            {session.user.email ?? "Not provided"}
+          </Text>
+          <Text style={styles.hint}>
+            Your login email is managed separately by Supabase.
+          </Text>
+        </View>
+
+        {loadingProfile ? (
+          <ActivityIndicator
+            size="large"
+            color="#3cebc5"
+            style={styles.loader}
+          />
+        ) : errorMessage ? (
+          <View>
+            <Text style={styles.errorText}>{errorMessage}</Text>
+            <Pressable style={styles.button} onPress={() => void loadProfile()}>
+              <Text style={styles.editBtn}>Retry</Text>
+            </Pressable>
+          </View>
         ) : (
           <>
-            <ProfileRow label="First name" value={profile.first_name} />
-            <ProfileRow label="Surname" value={profile.surname} />
-            <ProfileRow label="Business name" value={profile.business_name} />
-            <ProfileRow label="Business type" value={profile.business_type} />
-            <ProfileRow label="Contact number" value={profile.contact_no} />
-            <ProfileRow label="Email" value={session.user.email ?? null} />
+            {renderField("First Name", "first_name", "Enter first name")}
+            {renderField("Surname", "surname", "Enter surname")}
+            {renderField(
+              "Business Name",
+              "business_name",
+              "Enter business name",
+            )}
+            {renderField(
+              "Business Type",
+              "business_type",
+              "Enter business type",
+            )}
+            {renderField(
+              "Contact Number",
+              "contact_no",
+              "Enter contact number",
+            )}
+
+            {editing ? (
+              <>
+                <Pressable
+                  style={[
+                    styles.button,
+                    (saving || clearing) && styles.disabledButton,
+                  ]}
+                  onPress={() => void saveProfile()}
+                  disabled={saving || clearing}
+                >
+                  {saving ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <Text style={styles.editBtn}>Save Changes</Text>
+                  )}
+                </Pressable>
+
+                <Pressable
+                  style={styles.cancelButton}
+                  onPress={cancelEditing}
+                  disabled={saving || clearing}
+                >
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </Pressable>
+              </>
+            ) : (
+              <Pressable
+                style={styles.button}
+                onPress={startEditing}
+                disabled={clearing}
+              >
+                <Ionicons name="create-outline" size={19} color="#ffffff" />
+                <Text style={styles.editBtn}>Edit Profile</Text>
+              </Pressable>
+            )}
+
+            <View style={styles.dangerSection}>
+              <Text style={styles.dangerTitle}>Clear Profile Details</Text>
+              <Text style={styles.dangerDescription}>
+                Remove your saved personal and business details without deleting
+                your login account or stock items.
+              </Text>
+
+              <Pressable
+                style={[
+                  styles.deleteButton,
+                  (clearing || saving) && styles.disabledButton,
+                ]}
+                onPress={confirmClearProfile}
+                disabled={clearing || saving}
+              >
+                {clearing ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <>
+                    <Ionicons name="trash-outline" size={19} color="#ffffff" />
+                    <Text style={styles.deleteBtn}>Clear Profile Details</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
           </>
         )}
       </ScrollView>
-
-      <View style={styles.btnContainer}>
-        <Pressable
-          style={styles.button}
-          onPress={() =>
-            Alert.alert(
-              "Edit Account",
-              "The profile editing form has not been connected yet.",
-            )
-          }
-        >
-          <Text style={styles.editBtn}>Edit Account</Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.deleteButton}
-          onPress={() =>
-            Alert.alert(
-              "Delete Account",
-              "Account deletion has not been connected yet. Contact your administrator for assistance.",
-            )
-          }
-        >
-          <Text style={styles.deleteBtn}>Delete Account</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
-function ProfileRow({ label, value }: { label: string; value: string | null }) {
-  return (
-    <View style={styles.profileRow}>
-      <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{value || "Not provided"}</Text>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
     backgroundColor: "#0a5658",
-  },
-  text: {
-    color: "#fff",
-    fontSize: 18,
-  },
-  btnContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 8,
-    marginTop: 10,
-    paddingHorizontal: 10,
-    position: "absolute",
-    bottom: 95,
-    width: "90%",
-  },
-  editBtn: {
-    color: "#fff",
-    fontSize: 18,
-    textAlign: "center",
-  },
-  button: {
-    alignItems: "center",
-    marginTop: 10,
-    marginLeft: 10,
-    marginRight: 10,
-    width: "40%",
-    backgroundColor: "#1e332e",
-    padding: 10,
-    borderRadius: 8,
-  },
-  deleteBtn: {
-    borderWidth: 1,
-    borderColor: "red",
-    borderRadius: 8,
-    color: "red",
-    fontSize: 18,
-    textAlign: "center",
-    marginTop: 15,
-    marginLeft: 15,
-    marginRight: 15,
-    padding: 10,
-    width: "84%",
-    shadowColor: "white",
-    shadowOffset: {
-      width: 2,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  headerText: {
-    color: "#3cebc5",
-    fontSize: 36,
-    fontWeight: "bold",
-    marginTop: 50,
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 30,
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#0a5658",
-    padding: 20,
   },
   scroll: {
     width: "100%",
@@ -214,14 +404,45 @@ const styles = StyleSheet.create({
   },
   profileContent: {
     padding: 20,
-    paddingBottom: 130,
+    paddingBottom: 100,
   },
-  errorText: {
-    color: "#ffb4b4",
-    fontSize: 15,
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#0a5658",
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  avatar: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0f2f30",
+    borderWidth: 2,
+    borderColor: "#3cebc5",
+    marginBottom: 8,
+  },
+  headerText: {
+    color: "#3cebc5",
+    fontSize: 30,
+    fontWeight: "bold",
+    marginTop: 8,
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 15,
+  },
+  subtitle: {
+    color: "#d0dada",
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: "center",
   },
   profileRow: {
-    paddingVertical: 14,
+    paddingVertical: 12,
     paddingHorizontal: 15,
     marginBottom: 10,
     borderRadius: 10,
@@ -230,18 +451,103 @@ const styles = StyleSheet.create({
   label: {
     color: "#9caeb1",
     fontSize: 13,
-    marginBottom: 5,
+    marginBottom: 7,
   },
   value: {
     color: "#ffffff",
     fontSize: 17,
   },
-  deleteButton: {
-    flex: 1,
-    alignItems: "center",
+  input: {
+    minHeight: 44,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "red",
+    borderColor: "#3cebc5",
+    backgroundColor: "#173c3d",
+    paddingHorizontal: 10,
+    color: "#ffffff",
+    fontSize: 16,
+  },
+  hint: {
+    color: "#9caeb1",
+    fontSize: 12,
+    marginTop: 7,
+  },
+  button: {
+    minHeight: 46,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#1e332e",
     padding: 12,
     borderRadius: 8,
+    marginTop: 12,
+  },
+  editBtn: {
+    color: "#ffffff",
+    fontSize: 16,
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  cancelButton: {
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#3cebc5",
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  cancelText: {
+    color: "#3cebc5",
+    fontSize: 16,
+  },
+  dangerSection: {
+    marginTop: 26,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#326d6d",
+  },
+  dangerTitle: {
+    color: "#ffb4b4",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  dangerDescription: {
+    color: "#d0dada",
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
+  },
+  deleteButton: {
+    minHeight: 46,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#ff6b6b",
+    backgroundColor: "#682d2d",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  deleteBtn: {
+    color: "#ffffff",
+    fontSize: 15,
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  errorText: {
+    color: "#ffb4b4",
+    fontSize: 15,
+    marginBottom: 10,
+  },
+  loader: {
+    marginVertical: 24,
   },
 });
