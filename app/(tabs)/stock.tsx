@@ -544,6 +544,7 @@ const styles = StyleSheet.create({
     paddingLeft: 38,
     paddingRight: 35,
     color: "#ffffff",
+    fontSize: 17,
     backgroundColor: "#0f2f30",
   },
   searchIcon: {
@@ -572,7 +573,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 14,
     paddingTop: 16,
-    paddingBottom: 24,
+    paddingBottom: 90,
   },
   itemCard: {
     backgroundColor: "#0f2f30",

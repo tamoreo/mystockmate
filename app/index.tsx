@@ -16,6 +16,9 @@ export default function Index() {
             fontSize: 16,
             lineHeight: 20,
             marginTop: 20,
+            marginLeft: 40,
+            marginRight: 40,
+            marginBottom: 40,
             textAlign: "center",
           }}
         >

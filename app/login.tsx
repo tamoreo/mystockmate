@@ -1,6 +1,8 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -18,6 +20,7 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleLogin() {
@@ -94,8 +97,23 @@ export default function Login() {
           style={styles.input}
           placeholder="Enter your password"
           placeholderTextColor="#ccc"
-          secureTextEntry
+          secureTextEntry={!showPassword}
         />
+
+        <Pressable
+          style={styles.showPassword}
+          onPress={() => setShowPassword((value) => !value)}
+        >
+          <Ionicons
+            name={showPassword ? "eye-off-outline" : "eye-outline"}
+            size={19}
+            color="#3cebc5"
+          />
+          <Text style={styles.showPasswordText}>
+            {showPassword ? "Hide passwords" : "Show passwords"}
+          </Text>
+        </Pressable>
+
         <Pressable
           style={[
             styles.button,
@@ -108,7 +126,11 @@ export default function Login() {
           disabled={loading}
         >
           <Text style={styles.loginText}>
-            {loading ? "Loging in..." : "Login"}
+            {loading ? (
+              <ActivityIndicator color="#3cebc5" />
+            ) : (
+              <Text style={styles.loginText}>Login</Text>
+            )}
           </Text>
         </Pressable>
         <Text style={[styles.loginText, { marginTop: 20 }]}>
@@ -155,7 +177,8 @@ const styles = StyleSheet.create({
     borderColor: "none",
     borderRadius: 8,
     paddingHorizontal: 10,
-    color: "#b7b7b5",
+    color: "#ffffff",
+    fontSize: 17,
     shadowRadius: 4,
     elevation: 5,
     backgroundColor: "#173c3d",
@@ -175,6 +198,18 @@ const styles = StyleSheet.create({
     color: "#3cebc5",
     fontSize: 16,
     textAlign: "center",
+  },
+  showPassword: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-end",
+    marginRight: "6%",
+    marginTop: 10,
+    gap: 6,
+  },
+  showPasswordText: {
+    color: "#3cebc5",
+    fontSize: 14,
   },
   linkbutton: {
     marginTop: 15,

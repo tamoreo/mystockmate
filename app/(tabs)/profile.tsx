@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Redirect, useFocusEffect } from "expo-router";
+import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -33,6 +33,7 @@ const emptyProfile: ProfileData = {
 };
 
 export default function Profile() {
+  const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const userId = session?.user.id;
 
@@ -43,6 +44,66 @@ export default function Profile() {
   const [clearing, setClearing] = useState(false);
   const [editing, setEditing] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  async function handleDeleteAccount() {
+    Alert.alert(
+      "Permanently Delete Account?",
+      "This will permanently delete your login account, profile, and stock items. You will not be able to use this account to log in again.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete Account",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setClearing(true);
+
+              const { error } =
+                await supabase.functions.invoke("delete-account");
+
+              if (error) {
+                throw error;
+              }
+
+              // Clear the session stored on this device.
+              const { error: signOutError } = await supabase.auth.signOut({
+                scope: "local",
+              });
+
+              if (signOutError) {
+                console.warn("Local sign-out warning:", signOutError.message);
+              }
+
+              Alert.alert(
+                "Account Deleted",
+                "Your MyStockMate account has been deleted.",
+                [
+                  {
+                    text: "OK",
+                    onPress: () => router.replace("/"),
+                  },
+                ],
+              );
+            } catch (error) {
+              console.error("Account deletion failed:", error);
+
+              Alert.alert(
+                "Deletion Failed",
+                error instanceof Error
+                  ? error.message
+                  : "Unable to delete your account. Please try again.",
+              );
+            } finally {
+              setClearing(false);
+            }
+          },
+        },
+      ],
+    );
+  }
 
   const loadProfile = useCallback(async () => {
     if (!userId) {
@@ -385,6 +446,25 @@ export default function Profile() {
                   </>
                 )}
               </Pressable>
+
+              <Text style={[styles.dangerTitle, styles.deleteAccountTitle]}>
+                Permanently Delete Account
+              </Text>
+              <Text style={styles.dangerDescription}>
+                Permanently delete your login account, profile and stock items.
+              </Text>
+
+              <Pressable
+                style={[
+                  styles.deleteButton,
+                  (clearing || saving) && styles.disabledButton,
+                ]}
+                onPress={handleDeleteAccount}
+                disabled={clearing || saving}
+              >
+                <Ionicons name="warning-outline" size={19} color="#ffffff" />
+                <Text style={styles.deleteBtn}>Delete Account</Text>
+              </Pressable>
             </View>
           </>
         )}
@@ -465,7 +545,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#173c3d",
     paddingHorizontal: 10,
     color: "#ffffff",
-    fontSize: 16,
+    fontSize: 17,
   },
   hint: {
     color: "#9caeb1",
@@ -513,6 +593,9 @@ const styles = StyleSheet.create({
     color: "#ffb4b4",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  deleteAccountTitle: {
+    marginTop: 24,
   },
   dangerDescription: {
     color: "#d0dada",

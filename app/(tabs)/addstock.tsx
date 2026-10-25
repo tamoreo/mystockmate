@@ -1,9 +1,12 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { decode } from "base64-arraybuffer";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -16,6 +19,8 @@ import {
 import { useAuth } from "../../lib/auth";
 import { supabase } from "../../lib/supabase";
 
+const BUCKET_NAME = "stock-images";
+
 export default function AddStock() {
   const router = useRouter();
   const { session } = useAuth();
@@ -26,7 +31,84 @@ export default function AddStock() {
   const [itemSize, setItemSize] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [selectedImage, setSelectedImage] =
+    useState<ImagePicker.ImagePickerAsset | null>(null);
   const [saving, setSaving] = useState(false);
+
+  async function chooseImage(source: "camera" | "gallery") {
+    try {
+      let result: ImagePicker.ImagePickerResult;
+
+      if (source === "camera") {
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+        if (!permission.granted) {
+          Alert.alert(
+            "Camera permission required",
+            "Allow camera access in your device settings to take an item photo.",
+          );
+          return;
+        }
+
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ["images"],
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+          base64: true,
+        });
+      } else {
+        const permission =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        if (!permission.granted) {
+          Alert.alert(
+            "Gallery permission required",
+            "Allow photo library access to select an item picture.",
+          );
+          return;
+        }
+
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+          base64: true,
+        });
+      }
+
+      if (!result.canceled && result.assets.length > 0) {
+        setSelectedImage(result.assets[0]);
+      }
+    } catch (error) {
+      console.error("Image picker error:", error);
+      Alert.alert("Image error", "Could not open the image picker.");
+    }
+  }
+
+  function handleChooseImage() {
+    Alert.alert("Item Picture", "Choose how to add your picture.", [
+      {
+        text: "Take Photo",
+        onPress: () => void chooseImage("camera"),
+      },
+      {
+        text: "Choose from Gallery",
+        onPress: () => void chooseImage("gallery"),
+      },
+      ...(selectedImage
+        ? [
+            {
+              text: "Remove Picture",
+              style: "destructive" as const,
+              onPress: () => setSelectedImage(null),
+            },
+          ]
+        : []),
+      { text: "Cancel", style: "cancel" },
+    ]);
+  }
 
   async function handleSaveItem() {
     if (!session?.user) {
@@ -58,33 +140,114 @@ export default function AddStock() {
       return;
     }
 
+    let createdItemId: string | null = null;
+    let uploadedPath: string | null = null;
+
     try {
       setSaving(true);
 
-      const { error } = await supabase.from("stock_items").insert({
-        user_id: session.user.id,
-        item_name: itemName.trim(),
-        item_type: itemType.trim(),
-        quantity: parsedQuantity,
-        item_size: itemSize.trim() || null,
-        item_description: description.trim() || null,
-        item_price: parsedPrice,
-        item_image_url: null,
-      });
+      // Create the stock row first to obtain its ID.
+      const { data: item, error: insertError } = await supabase
+        .from("stock_items")
+        .insert({
+          user_id: session.user.id,
+          item_name: itemName.trim(),
+          item_type: itemType.trim(),
+          quantity: parsedQuantity,
+          item_size: itemSize.trim() || null,
+          item_description: description.trim() || null,
+          item_price: parsedPrice,
+          item_image_url: null,
+        })
+        .select("id")
+        .single();
 
-      if (error) {
-        Alert.alert("Save failed", error.message);
-        return;
+      if (insertError) throw insertError;
+
+      createdItemId = String(item.id);
+
+      // Upload the picture if the user selected one.
+      if (selectedImage) {
+        if (!selectedImage.base64) {
+          throw new Error(
+            "The selected picture could not be read. Please select it again.",
+          );
+        }
+
+        const mimeType = selectedImage.mimeType ?? "image/jpeg";
+
+        const extension =
+          mimeType === "image/png"
+            ? "png"
+            : mimeType === "image/webp"
+              ? "webp"
+              : "jpg";
+
+        uploadedPath = `${session.user.id}/${createdItemId}.${extension}`;
+
+        const imageData = decode(selectedImage.base64);
+
+        const { error: uploadError } = await supabase.storage
+          .from(BUCKET_NAME)
+          .upload(uploadedPath, imageData, {
+            contentType: mimeType,
+            upsert: false,
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Save the private Storage path, not a public URL.
+        const { error: updateError } = await supabase
+          .from("stock_items")
+          .update({ item_image_url: uploadedPath })
+          .eq("id", item.id)
+          .eq("user_id", session.user.id);
+
+        if (updateError) throw updateError;
       }
 
       Alert.alert("Success", "Your stock item has been saved.", [
         {
           text: "OK",
-          onPress: () => router.replace("/(tabs)/addstock"),
+          onPress: () => {
+            handleClearFields();
+            router.replace("/(tabs)/addstock");
+          },
         },
       ]);
-    } catch {
-      Alert.alert("Error", "Could not save the item. Please try again.");
+    } catch (error) {
+      console.error("Save stock item error:", error);
+
+      // Best-effort cleanup so a failed image upload
+      // does not leave an incomplete stock record.
+      if (uploadedPath) {
+        const { error: cleanupError } = await supabase.storage
+          .from(BUCKET_NAME)
+          .remove([uploadedPath]);
+
+        if (cleanupError) {
+          console.error("Image cleanup failed:", cleanupError);
+        }
+      }
+
+      if (createdItemId) {
+        const { error: cleanupError } = await supabase
+          .from("stock_items")
+          .delete()
+          .eq("id", createdItemId)
+          .eq("user_id", session.user.id);
+
+        if (cleanupError) {
+          console.error("Stock cleanup failed:", cleanupError);
+        }
+      }
+
+      Alert.alert(
+        "Save failed",
+        error instanceof Error
+          ? error.message
+          : "Could not save the item. Please try again.",
+      );
     } finally {
       setSaving(false);
     }
@@ -97,6 +260,7 @@ export default function AddStock() {
     setItemSize("");
     setDescription("");
     setPrice("");
+    setSelectedImage(null);
   }
 
   return (
@@ -118,14 +282,16 @@ export default function AddStock() {
           value={itemName}
           onChangeText={setItemName}
         />
+
         <Text style={styles.textLabel}>Item Type</Text>
         <TextInput
           style={styles.input}
-          placeholder="e.g. Elcetronics, Clothing, Food"
+          placeholder="e.g., Electronics, Clothing, Food"
           placeholderTextColor="#ccc"
           value={itemType}
           onChangeText={setItemType}
         />
+
         <Text style={styles.textLabel}>Item Quantity</Text>
         <TextInput
           style={styles.input}
@@ -135,6 +301,7 @@ export default function AddStock() {
           value={quantity}
           onChangeText={setQuantity}
         />
+
         <Text style={styles.textLabel}>Item Size</Text>
         <TextInput
           style={styles.input}
@@ -143,60 +310,77 @@ export default function AddStock() {
           value={itemSize}
           onChangeText={setItemSize}
         />
+
         <Text style={styles.textLabel}>Item Description</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, styles.descriptionInput]}
           placeholder="e.g., A sleek smartphone with advanced features"
           placeholderTextColor="#ccc"
           value={description}
           onChangeText={setDescription}
           multiline
         />
+
         <Text style={styles.textLabel}>Item Price</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g., 99.99"
-          inputMode="decimal"
+          keyboardType="decimal-pad"
           placeholderTextColor="#ccc"
           value={price}
           onChangeText={setPrice}
         />
+
         <Text style={styles.textLabel}>Item Image</Text>
+
         <TouchableOpacity
-          style={styles.image}
-          onPress={() => alert("Image picker not implemented yet!")}
+          style={styles.imagePicker}
+          onPress={handleChooseImage}
+          disabled={saving}
+          activeOpacity={0.8}
         >
-          <MaterialCommunityIcons
-            name="camera-plus"
-            size={30}
-            color="#83c4b6"
-            alignSelf="center"
-            style={{ marginTop: 40 }}
-          />
+          {selectedImage ? (
+            <Image
+              source={{ uri: selectedImage.uri }}
+              style={styles.previewImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <>
+              <MaterialCommunityIcons
+                name="camera-plus"
+                size={36}
+                color="#83c4b6"
+              />
+              <Text style={styles.imageHint}>Add item picture</Text>
+            </>
+          )}
         </TouchableOpacity>
 
+        {selectedImage && (
+          <Pressable
+            style={styles.changeImageButton}
+            onPress={handleChooseImage}
+            disabled={saving}
+          >
+            <Text style={styles.changeImageText}>Change or remove picture</Text>
+          </Pressable>
+        )}
+
         <Pressable
-          style={styles.button}
+          style={[styles.button, saving && styles.disabledButton]}
           onPress={handleSaveItem}
           disabled={saving}
         >
           {saving ? (
             <ActivityIndicator color="#3cebc5" />
           ) : (
-            <Text style={styles.addText}>Save Items</Text>
+            <Text style={styles.addText}>Save Item</Text>
           )}
         </Pressable>
+
         <Pressable
-          style={{
-            backgroundColor: "transparent",
-            marginTop: 25,
-            marginBottom: 30,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
-            elevation: 5,
-          }}
+          style={styles.clearButton}
           onPress={handleClearFields}
           disabled={saving}
         >
@@ -222,27 +406,29 @@ const styles = StyleSheet.create({
   input: {
     marginTop: 2,
     width: "90%",
-    height: 40,
-    borderWidth: 0,
-    borderColor: "none",
+    minHeight: 40,
     borderRadius: 8,
     paddingHorizontal: 10,
-    shadowRadius: 4,
+    paddingVertical: 9,
     elevation: 5,
     backgroundColor: "#173c3d",
-    color: "white",
-    fontSize: 15,
+    color: "#ffffff",
+    fontSize: 17,
+  },
+  descriptionInput: {
+    minHeight: 90,
+    textAlignVertical: "top",
   },
   button: {
     marginTop: 25,
-    marginLeft: 10,
-    marginRight: 10,
     width: "90%",
     backgroundColor: "#0d473b",
-    padding: 10,
+    padding: 12,
     borderRadius: 8,
-    shadowRadius: 4,
     elevation: 5,
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   addText: {
     color: "#3cebc5",
@@ -257,22 +443,41 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 2,
   },
-  image: {
+  imagePicker: {
     marginTop: 10,
-    width: 110,
-    height: 110,
-    borderRadius: 4,
+    width: 180,
+    height: 180,
+    borderRadius: 12,
     borderColor: "#3cebc5",
-    borderWidth: 0,
-    shadowRadius: 8,
-    elevation: 2,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    backgroundColor: "#173c3d",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
-  headerText: {
+  previewImage: {
+    width: "100%",
+    height: "100%",
+  },
+  imageHint: {
+    color: "#83c4b6",
+    marginTop: 8,
+    fontSize: 13,
+  },
+  changeImageButton: {
+    marginTop: 10,
+    padding: 8,
+  },
+  changeImageText: {
     color: "#3cebc5",
-    fontSize: 36,
-    fontWeight: "bold",
-    marginTop: 50,
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 30,
+    textDecorationLine: "underline",
+  },
+  clearButton: {
+    backgroundColor: "transparent",
+    marginTop: 25,
+    marginBottom: 30,
+    padding: 10,
+    width: "90%",
   },
 });

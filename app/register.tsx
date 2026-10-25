@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -23,6 +24,7 @@ export default function Register() {
   const [contactNo, setContactNo] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleRegister() {
@@ -175,8 +177,9 @@ export default function Register() {
           style={styles.input}
           placeholder="Enter password"
           placeholderTextColor="#ccc"
-          secureTextEntry
+          secureTextEntry={!showPassword}
         />
+
         <Text style={styles.textLabel}>Confirm Password</Text>
         <TextInput
           value={confirmPassword}
@@ -185,8 +188,21 @@ export default function Register() {
           style={styles.input}
           placeholder="Enter password"
           placeholderTextColor="#ccc"
-          secureTextEntry
+          secureTextEntry={!showPassword}
         />
+        <Pressable
+          style={styles.showPassword}
+          onPress={() => setShowPassword((value) => !value)}
+        >
+          <Ionicons
+            name={showPassword ? "eye-off-outline" : "eye-outline"}
+            size={19}
+            color="#3cebc5"
+          />
+          <Text style={styles.showPasswordText}>
+            {showPassword ? "Hide passwords" : "Show passwords"}
+          </Text>
+        </Pressable>
         <Pressable
           style={[
             styles.button,
@@ -233,7 +249,8 @@ const styles = StyleSheet.create({
     borderColor: "none",
     borderRadius: 8,
     paddingHorizontal: 10,
-    color: "#b7b7b5",
+    color: "#ffffff",
+    fontSize: 17,
     shadowRadius: 4,
     elevation: 5,
     backgroundColor: "#173c3d",
@@ -275,6 +292,18 @@ const styles = StyleSheet.create({
     marginLeft: "6%",
     marginTop: 10,
     marginBottom: 1,
+  },
+  showPassword: {
+    alignSelf: "flex-end",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginRight: "6%",
+    marginTop: 8,
+  },
+  showPasswordText: {
+    color: "#3cebc5",
+    fontSize: 14,
   },
   headerContainer: {
     alignItems: "flex-end",

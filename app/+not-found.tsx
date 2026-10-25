@@ -21,14 +21,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#0a5658",
   },
-  text: {
-    color: "#fff",
-    fontSize: 24,
-  },
   button: {
     backgroundColor: "#007AFF",
     padding: 12,
     borderRadius: 8,
     marginTop: 20,
+    color: "#fff",
+    fontSize: 20,
   },
 });
