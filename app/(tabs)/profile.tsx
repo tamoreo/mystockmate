@@ -233,69 +233,6 @@ export default function Profile() {
     }
   }
 
-  function confirmClearProfile() {
-    Alert.alert(
-      "Clear Profile Details",
-      "This will clear your personal and business details. Your login account, email address and stock items will remain.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Clear Details",
-          style: "destructive",
-          onPress: () => void clearProfile(),
-        },
-      ],
-    );
-  }
-
-  async function clearProfile() {
-    if (!userId) return;
-
-    setClearing(true);
-
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .update({
-          first_name: "",
-          surname: "",
-          business_name: "",
-          business_type: "",
-          contact_no: "",
-        })
-        .eq("id", userId)
-        .select("first_name, surname, business_name, business_type, contact_no")
-        .maybeSingle();
-
-      if (error) {
-        Alert.alert("Clear failed", error.message);
-        return;
-      }
-
-      if (!data) {
-        Alert.alert(
-          "Profile not cleared",
-          "No profile record was updated. Please verify that your profile exists.",
-        );
-        return;
-      }
-
-      const clearedProfile = data as ProfileData;
-      setProfile(clearedProfile);
-      setForm(clearedProfile);
-      setEditing(false);
-
-      Alert.alert(
-        "Profile Cleared",
-        "Your profile details have been cleared. Your login and stock items are unchanged.",
-      );
-    } catch {
-      Alert.alert("Error", "Unable to clear your profile details.");
-    } finally {
-      setClearing(false);
-    }
-  }
-
   function renderField(
     label: string,
     field: keyof ProfileData,
@@ -423,30 +360,6 @@ export default function Profile() {
             )}
 
             <View style={styles.dangerSection}>
-              <Text style={styles.dangerTitle}>Clear Profile Details</Text>
-              <Text style={styles.dangerDescription}>
-                Remove your saved personal and business details without deleting
-                your login account or stock items.
-              </Text>
-
-              <Pressable
-                style={[
-                  styles.deleteButton,
-                  (clearing || saving) && styles.disabledButton,
-                ]}
-                onPress={confirmClearProfile}
-                disabled={clearing || saving}
-              >
-                {clearing ? (
-                  <ActivityIndicator color="#ffffff" />
-                ) : (
-                  <>
-                    <Ionicons name="trash-outline" size={19} color="#ffffff" />
-                    <Text style={styles.deleteBtn}>Clear Profile Details</Text>
-                  </>
-                )}
-              </Pressable>
-
               <Text style={[styles.dangerTitle, styles.deleteAccountTitle]}>
                 Permanently Delete Account
               </Text>

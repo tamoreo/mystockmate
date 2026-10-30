@@ -29,6 +29,7 @@ type StockItem = {
   item_price: number | null;
   item_image_url: string | null;
   created_at: string;
+  imageDisplayUrl?: string | null;
 };
 
 export default function Stock() {
@@ -81,17 +82,54 @@ export default function Stock() {
             setErrorMessage(error.message);
             setItems([]);
           } else {
-            setItems((data ?? []) as StockItem[]);
+            const stockItems = (data ?? []) as StockItem[];
+
+            const itemsWithImages = await Promise.all(
+              stockItems.map(async (item) => {
+                if (!item.item_image_url) {
+                  return { ...item, imageDisplayUrl: null };
+                }
+
+                try {
+                  const { data: imageData, error: imageError } =
+                    await supabase.storage
+                      .from("stock-images")
+                      .createSignedUrl(item.item_image_url, 60 * 60);
+
+                  if (imageError || !imageData?.signedUrl) {
+                    console.warn(
+                      `Could not load image for ${item.item_name}:`,
+                      imageError?.message,
+                    );
+
+                    return { ...item, imageDisplayUrl: null };
+                  }
+
+                  return {
+                    ...item,
+                    imageDisplayUrl: imageData.signedUrl,
+                  };
+                } catch {
+                  return { ...item, imageDisplayUrl: null };
+                }
+              }),
+            );
+
+            if (cancelled) return;
+
+            setItems(itemsWithImages);
           }
-        } catch {
+        } catch (error) {
           if (!cancelled) {
-            setErrorMessage("Unable to connect. Please try again.");
+            setErrorMessage(
+              error instanceof Error
+                ? error.message
+                : "Could not load stock items.",
+            );
             setItems([]);
           }
         } finally {
-          if (!cancelled) {
-            setLoadingItems(false);
-          }
+          if (!cancelled) setLoadingItems(false);
         }
       }
 
@@ -209,7 +247,12 @@ export default function Stock() {
 
       setItems((currentItems) =>
         currentItems.map((item) =>
-          item.id === updatedItem.id ? updatedItem : item,
+          item.id === updatedItem.id
+            ? {
+                ...updatedItem,
+                imageDisplayUrl: item.imageDisplayUrl,
+              }
+            : item,
         ),
       );
 
@@ -320,11 +363,29 @@ export default function Stock() {
           renderItem={({ item }) => (
             <View style={styles.itemCard}>
               {item.item_image_url ? (
-                <Image
-                  source={{ uri: item.item_image_url }}
-                  style={styles.itemImage}
-                  resizeMode="cover"
-                />
+                item.imageDisplayUrl ? (
+                  <Image
+                    source={{ uri: item.imageDisplayUrl! }}
+                    style={styles.itemImage}
+                    resizeMode="cover"
+                    onError={() => {
+                      setItems((currentItems) =>
+                        currentItems.map((currentItem) =>
+                          currentItem.id === item.id
+                            ? { ...currentItem, imageDisplayUrl: null }
+                            : currentItem,
+                        ),
+                      );
+                    }}
+                  />
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <Ionicons name="camera-outline" size={42} color="#3cebc5" />
+                    <Text style={styles.imagePlaceholderText}>
+                      No image available
+                    </Text>
+                  </View>
+                )
               ) : null}
 
               <Text style={styles.itemName}>{item.item_name}</Text>
@@ -590,6 +651,25 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     backgroundColor: "#173c3d",
   },
+
+  imagePlaceholder: {
+    width: "100%",
+    height: 180,
+    borderRadius: 10,
+    marginBottom: 12,
+    backgroundColor: "#173c3d",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#326d6d",
+  },
+
+  imagePlaceholderText: {
+    color: "#b7b7b1",
+    fontSize: 13,
+    marginTop: 8,
+  },
+
   itemName: {
     color: "#3cebc5",
     fontSize: 20,

@@ -62,7 +62,6 @@ export default function Resetpw() {
           return;
         }
 
-        // PKCE flow: exchange the authorization code for a session.
         const code = queryParams.get("code");
 
         if (code) {
@@ -377,6 +376,7 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
   },
   lockIcon: {
+    marginTop: -55,
     marginBottom: 10,
   },
   title: {
