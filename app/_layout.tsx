@@ -74,6 +74,13 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen name="+not-found" options={{ headerLeft: () => "" }} />
+        <Stack.Screen
+          name="auth/callback"
+          options={{
+            headerShown: false,
+            gestureEnabled: false,
+          }}
+        />
       </Stack>
     </AuthProvider>
   );

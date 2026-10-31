@@ -7,23 +7,19 @@ import { supabase } from "../../lib/supabase";
 export default function AuthCallback() {
   const router = useRouter();
   const started = useRef(false);
+  const handled = useRef(false);
   const [message, setMessage] = useState("Confirming your email...");
 
   useEffect(() => {
     if (started.current) return;
     started.current = true;
 
-    async function confirmEmail() {
+    async function confirmEmail(urlString: string) {
+      if (handled.current) return;
+      handled.current = true;
+
       try {
-        const initialUrl = await Linking.getInitialURL();
-
-        if (!initialUrl) {
-          throw new Error(
-            "No confirmation link was received. Please open the email link again.",
-          );
-        }
-
-        const url = new URL(initialUrl);
+        const url = new URL(urlString);
         const query = url.searchParams;
         const fragment = new URLSearchParams(url.hash.replace(/^#/, ""));
 
@@ -31,9 +27,7 @@ export default function AuthCallback() {
           query.get("error_description") ?? fragment.get("error_description");
 
         if (errorDescription) {
-          throw new Error(
-            decodeURIComponent(errorDescription.replace(/\+/g, " ")),
-          );
+          throw new Error(errorDescription);
         }
 
         const code = query.get("code");
@@ -68,28 +62,19 @@ export default function AuthCallback() {
               if (error) throw error;
             } else {
               throw new Error(
-                "The link did not contain confirmation details. Request a new confirmation email and try again.",
+                "The confirmation link is missing or invalid. Please request a new email.",
               );
             }
           }
         }
 
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
+        // Confirmation succeeded. A login session is not required
+        // to show the Login screen.
+        setMessage("Email confirmed! Opening Login...");
 
-        if (sessionError) throw sessionError;
-
-        if (!session) {
-          throw new Error(
-            "Your email may be confirmed, but no session was created. Please sign in.",
-          );
-        }
-
-        setMessage("Email confirmed! Opening your stock...");
-        router.replace("/(tabs)/addstock");
+        router.replace("/login");
       } catch (error) {
+        handled.current = false;
         console.error("Email confirmation failed:", error);
 
         setMessage(
@@ -100,7 +85,27 @@ export default function AuthCallback() {
       }
     }
 
-    void confirmEmail();
+    // Handle a link that opened the app from a closed state.
+    async function handleInitialUrl() {
+      const url = await Linking.getInitialURL();
+
+      if (url) {
+        await confirmEmail(url);
+      } else {
+        setMessage(
+          "No confirmation link was received. Please open the email link again.",
+        );
+      }
+    }
+
+    void handleInitialUrl();
+
+    // Also handle a link opened while the app is already running.
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      void confirmEmail(url);
+    });
+
+    return () => subscription.remove();
   }, [router]);
 
   return (
