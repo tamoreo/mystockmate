@@ -12,16 +12,31 @@ export default function AuthCallback() {
     token_hash?: string;
     type?: string;
     error_description?: string;
+    access_token?: string;
+    refresh_token?: string;
   }>();
 
   const handled = useRef(false);
+  const mounted = useRef(true);
+
   const [message, setMessage] = useState("Confirming your email...");
 
   useEffect(() => {
-    let mounted = true;
+    mounted.current = true;
 
-    async function confirmEmail(urlString?: string) {
+    let redirectTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const goToLogin = () => {
+      if (!mounted.current) return;
+
+      setMessage("Email confirmed! Opening Login...");
+
+      router.replace("/login");
+    };
+
+    const confirmEmail = async (urlString?: string) => {
       if (handled.current) return;
+
       handled.current = true;
 
       try {
@@ -30,12 +45,17 @@ export default function AuthCallback() {
         let type = params.type;
         let errorDescription = params.error_description;
 
+        let accessToken = params.access_token;
+        let refreshToken = params.refresh_token;
+
         if (urlString) {
           const url = new URL(urlString);
+
           const query = url.searchParams;
           const fragment = new URLSearchParams(url.hash.replace(/^#/, ""));
 
           code = code ?? query.get("code") ?? undefined;
+
           tokenHash =
             tokenHash ??
             query.get("token_hash") ??
@@ -50,21 +70,17 @@ export default function AuthCallback() {
             fragment.get("error_description") ??
             undefined;
 
-          const accessToken = fragment.get("access_token");
-          const refreshToken = fragment.get("refresh_token");
+          accessToken =
+            accessToken ??
+            query.get("access_token") ??
+            fragment.get("access_token") ??
+            undefined;
 
-          if (errorDescription) {
-            throw new Error(errorDescription);
-          }
-
-          if (accessToken && refreshToken && !code && !tokenHash) {
-            const { error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-
-            if (error) throw error;
-          }
+          refreshToken =
+            refreshToken ??
+            query.get("refresh_token") ??
+            fragment.get("refresh_token") ??
+            undefined;
         }
 
         if (errorDescription) {
@@ -82,28 +98,33 @@ export default function AuthCallback() {
           });
 
           if (error) throw error;
+        } else if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (error) throw error;
         } else {
+          // Check whether Supabase has already confirmed the user.
           const { data, error } = await supabase.auth.getUser();
 
-          if (error || !data.user?.email_confirmed_at) {
+          if (error) throw error;
+
+          if (!data.user?.email_confirmed_at) {
             throw new Error(
               "Confirmation details were not received. Please open the email link again.",
             );
           }
         }
 
-        if (!mounted) return;
-
-        setMessage("Email confirmed! Opening Login...");
-
-        setTimeout(() => {
-          if (mounted) router.replace("/login");
-        }, 1000);
+        goToLogin();
       } catch (error) {
         console.error("Email confirmation failed:", error);
 
-        if (mounted) {
+        if (mounted.current) {
           handled.current = false;
+
           setMessage(
             error instanceof Error
               ? error.message
@@ -111,40 +132,52 @@ export default function AuthCallback() {
           );
         }
       }
-    }
+    };
 
-    if (params.code || params.token_hash || params.error_description) {
+    // Check parameters received by Expo Router.
+    if (
+      params.code ||
+      params.token_hash ||
+      params.access_token ||
+      params.error_description
+    ) {
       void confirmEmail();
     } else {
+      // Check the initial deep link.
       void Linking.getInitialURL().then((url) => {
         if (url) {
           void confirmEmail(url);
         } else {
-          setMessage("Waiting for email confirmation...");
+          // Check whether the user is already confirmed.
+          void supabase.auth.getUser().then(({ data, error }) => {
+            if (!error && data.user?.email_confirmed_at && mounted.current) {
+              goToLogin();
+            } else if (mounted.current) {
+              setMessage("Waiting for email confirmation...");
+            }
+          });
         }
       });
     }
 
-    const subscription = Linking.addEventListener(
-      "url",
-      ({ url }) => void confirmEmail(url),
-    );
+    // Listen for links opened while this screen is active.
+    const linkSubscription = Linking.addEventListener("url", ({ url }) => {
+      void confirmEmail(url);
+    });
 
     return () => {
-      mounted = false;
-      subscription.remove();
+      mounted.current = false;
+
+      if (redirectTimer) clearTimeout(redirectTimer);
+
+      linkSubscription.remove();
     };
-  }, [
-    params.code,
-    params.token_hash,
-    params.type,
-    params.error_description,
-    router,
-  ]);
+  }, [params, router]);
 
   return (
     <View style={styles.container}>
       <ActivityIndicator size="large" color="#3cebc5" />
+
       <Text style={styles.message}>{message}</Text>
     </View>
   );

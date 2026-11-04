@@ -285,9 +285,6 @@ export default function Profile() {
           <Text style={styles.value}>
             {session.user.email ?? "Not provided"}
           </Text>
-          <Text style={styles.hint}>
-            Your login email is managed separately by Supabase.
-          </Text>
         </View>
 
         {loadingProfile ? (
