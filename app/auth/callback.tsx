@@ -1,112 +1,146 @@
 import * as Linking from "expo-linking";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { supabase } from "../../lib/supabase";
 
 export default function AuthCallback() {
   const router = useRouter();
-  const started = useRef(false);
+
+  const params = useLocalSearchParams<{
+    code?: string;
+    token_hash?: string;
+    type?: string;
+    error_description?: string;
+  }>();
+
   const handled = useRef(false);
   const [message, setMessage] = useState("Confirming your email...");
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
+    let mounted = true;
 
-    async function confirmEmail(urlString: string) {
+    async function confirmEmail(urlString?: string) {
       if (handled.current) return;
       handled.current = true;
 
       try {
-        const url = new URL(urlString);
-        const query = url.searchParams;
-        const fragment = new URLSearchParams(url.hash.replace(/^#/, ""));
+        let code = params.code;
+        let tokenHash = params.token_hash;
+        let type = params.type;
+        let errorDescription = params.error_description;
 
-        const errorDescription =
-          query.get("error_description") ?? fragment.get("error_description");
+        if (urlString) {
+          const url = new URL(urlString);
+          const query = url.searchParams;
+          const fragment = new URLSearchParams(url.hash.replace(/^#/, ""));
+
+          code = code ?? query.get("code") ?? undefined;
+          tokenHash =
+            tokenHash ??
+            query.get("token_hash") ??
+            fragment.get("token_hash") ??
+            undefined;
+
+          type = type ?? query.get("type") ?? fragment.get("type") ?? undefined;
+
+          errorDescription =
+            errorDescription ??
+            query.get("error_description") ??
+            fragment.get("error_description") ??
+            undefined;
+
+          const accessToken = fragment.get("access_token");
+          const refreshToken = fragment.get("refresh_token");
+
+          if (errorDescription) {
+            throw new Error(errorDescription);
+          }
+
+          if (accessToken && refreshToken && !code && !tokenHash) {
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+            if (error) throw error;
+          }
+        }
 
         if (errorDescription) {
           throw new Error(errorDescription);
         }
 
-        const code = query.get("code");
-
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
 
           if (error) throw error;
+        } else if (tokenHash && type === "signup") {
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: "signup",
+          });
+
+          if (error) throw error;
         } else {
-          const tokenHash =
-            query.get("token_hash") ?? fragment.get("token_hash");
+          const { data, error } = await supabase.auth.getUser();
 
-          const type = query.get("type") ?? fragment.get("type");
-
-          if (tokenHash && type === "signup") {
-            const { error } = await supabase.auth.verifyOtp({
-              token_hash: tokenHash,
-              type: "signup",
-            });
-
-            if (error) throw error;
-          } else {
-            const accessToken = fragment.get("access_token");
-            const refreshToken = fragment.get("refresh_token");
-
-            if (accessToken && refreshToken) {
-              const { error } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken,
-              });
-
-              if (error) throw error;
-            } else {
-              throw new Error(
-                "The confirmation link is missing or invalid. Please request a new email.",
-              );
-            }
+          if (error || !data.user?.email_confirmed_at) {
+            throw new Error(
+              "Confirmation details were not received. Please open the email link again.",
+            );
           }
         }
 
-        // Confirmation succeeded. A login session is not required
-        // to show the Login screen.
+        if (!mounted) return;
+
         setMessage("Email confirmed! Opening Login...");
 
-        router.replace("/login");
+        setTimeout(() => {
+          if (mounted) router.replace("/login");
+        }, 1000);
       } catch (error) {
-        handled.current = false;
         console.error("Email confirmation failed:", error);
 
-        setMessage(
-          error instanceof Error
-            ? error.message
-            : "Unable to confirm your email. Please try again.",
-        );
+        if (mounted) {
+          handled.current = false;
+          setMessage(
+            error instanceof Error
+              ? error.message
+              : "Unable to confirm your email. Please try again.",
+          );
+        }
       }
     }
 
-    // Handle a link that opened the app from a closed state.
-    async function handleInitialUrl() {
-      const url = await Linking.getInitialURL();
-
-      if (url) {
-        await confirmEmail(url);
-      } else {
-        setMessage(
-          "No confirmation link was received. Please open the email link again.",
-        );
-      }
+    if (params.code || params.token_hash || params.error_description) {
+      void confirmEmail();
+    } else {
+      void Linking.getInitialURL().then((url) => {
+        if (url) {
+          void confirmEmail(url);
+        } else {
+          setMessage("Waiting for email confirmation...");
+        }
+      });
     }
 
-    void handleInitialUrl();
+    const subscription = Linking.addEventListener(
+      "url",
+      ({ url }) => void confirmEmail(url),
+    );
 
-    // Also handle a link opened while the app is already running.
-    const subscription = Linking.addEventListener("url", ({ url }) => {
-      void confirmEmail(url);
-    });
-
-    return () => subscription.remove();
-  }, [router]);
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
+  }, [
+    params.code,
+    params.token_hash,
+    params.type,
+    params.error_description,
+    router,
+  ]);
 
   return (
     <View style={styles.container}>
