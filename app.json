@@ -12,7 +12,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/MyStockMateIcon.png",
+        "foregroundImage": "./assets/MyStockIcon.png",
         "backgroundColor": "#E6F4FE"
       },
       "predictiveBackGestureEnabled": false,
